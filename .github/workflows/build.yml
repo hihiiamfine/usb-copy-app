@@ -6,16 +6,34 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Build with Buildozer
-      uses: kivy/build-action@v1
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        fieldname: 'buildozer.spec'
-        lock_buildozer: 'false'
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential ccache git libncurses5:i386 libstdc++6:i386 \
+          libz1:i386 zlib1g-dev openjdk-17-jdk unzip wget curl \
+          autoconf libtool pkg-config cmake libffi-dev libssl-dev
+
+    - name: Install Buildozer and Cython
+      run: |
+        pip install --upgrade pip
+        pip install --user Cython==0.29.36 buildozer
+
+    - name: Build APK with Buildozer
+      run: |
+        export PATH="$HOME/.local/bin:$PATH"
+        buildozer -v android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
